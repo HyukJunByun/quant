@@ -14,8 +14,8 @@ code_data = code_data.apply(make_code)
 #print(code_data)
 
 webpage = requests.get("http://comp.fnguide.com/SVO2/ASP/SVD_Main.asp?pGB=1&gicode=A005930&cID=&MenuYn=Y&ReportGB=D&NewMenuID=Y&stkGb=701")
-web_data = bs4.BeautifulSoup(webpage.content, 'html.parser')
-target = web_data.find('div', {'class':'um_table', 'id':'highlight_D_A'})
+web_data = BeautifulSoup(webpage.content, 'html.parser')
+target = web_data.find('div', {'class': 'um_table', 'id': 'highlight_D_A'})
 print(target)
 # print(webpage.text)
 
