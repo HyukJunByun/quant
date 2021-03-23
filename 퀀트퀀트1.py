@@ -13,7 +13,10 @@ code_data = code_data['종목코드']
 code_data = code_data.apply(make_code)
 #print(code_data)
 
-webpage = requests.get("http://comp.fnguide.com/SVO2/ASP/SVD_Main.asp?pGB=1&gicode=A005930&cID=&MenuYn=Y&ReportGB=D&NewMenuID=Y&stkGb=701")
+code_num = code_data[1571]
+#(임시 테스트)제일기획 종목코드 가져오기
+fnguide_url = "http://comp.fnguide.com/SVO2/ASP/SVD_Main.asp?pGB=1&gicode=A" + code_num + "&cID=&MenuYn=Y&ReportGB=D&NewMenuID=Y&stkGb=701"
+webpage = requests.get(fnguide_url)
 web_data = BeautifulSoup(webpage.content, 'html.parser')
 target = web_data.find('div', {'class': 'um_table', 'id': 'highlight_D_A'})
 print(target)
