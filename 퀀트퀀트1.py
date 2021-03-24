@@ -66,4 +66,4 @@ wb2.save('RESULT.xlsx')
 #ws.values 셀의 수식이 아닌 값만을 가져온다
 #G:\Hyuk_Rim.xlsx
 """
-print(price_and_num_data[0])
+print(price_and_num_data[0].text)
