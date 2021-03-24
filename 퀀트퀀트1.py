@@ -40,7 +40,7 @@ print(my_zoo_data[5].text)
 
 #ifrs_D_A = web_data.find('div', {'class': 'um_table', 'id': 'highlight_D_A'})
 #ifrs표 데이터 불러오기
-
+#G:\Hyuk_Rim.xlsx
 
 
 # print(webpage.text)
