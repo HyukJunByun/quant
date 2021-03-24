@@ -13,10 +13,12 @@ code_data = code_data['종목코드']
 code_data = code_data.apply(make_code)
 #print(code_data)
 
-code_num = code_data[1571]
+#code_num = code_data[1571]
 #(임시 테스트)랜덤 법인 종목코드 가져오기
 
-fnguide_url = "http://comp.fnguide.com/SVO2/ASP/SVD_Main.asp?pGB=1&gicode=A" + code_num + "&cID=&MenuYn=Y&ReportGB=D&NewMenuID=Y&stkGb=701"
+#fnguide_url = "http://comp.fnguide.com/SVO2/ASP/SVD_Main.asp?pGB=1&gicode=A" + code_num + "&cID=&MenuYn=Y&ReportGB=D&NewMenuID=Y&stkGb=701"
+fnguide_url = "https://comp.fnguide.com/SVO2/ASP/SVD_main.asp?pGB=1&gicode=A005930&cID=&MenuYn=Y&ReportGB=&NewMenuID=11&stkGb=&strResearchYN="
+#테스트 쉬우라고 일단 삼성전자 url
 #종목코드를 이용해서 fnquide 접속
 webpage = requests.get(fnguide_url)
 web_data = BeautifulSoup(webpage.content, 'html.parser')
@@ -32,9 +34,9 @@ price_and_num_data = price_and_num.find_all('td')
 #시세현황표에 있는 숫자들을 find_all 하면 표의 왼쪽에서 오른쪽으로, 위에서 아래순으로 저장한다.
 my_zoo = web_data.find('div', {'class': 'um_table', 'id': 'svdMainGrid5'})
 #주주구분 현황
-my_zoo_data = price_and_num.find_all('td')
+my_zoo_data = my_zoo.find_all('td')
 #주주구분 현황 안에 있는 숫자들 전부 가져오기
-print(my_zoo_data[4])
+print(my_zoo_data[5].text)
 
 #ifrs_D_A = web_data.find('div', {'class': 'um_table', 'id': 'highlight_D_A'})
 #ifrs표 데이터 불러오기
