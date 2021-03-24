@@ -27,9 +27,14 @@ price_and_num = web_data.find('div', {'class': 'um_table', 'id': 'svdMainGrid1'}
 #시세현황표 
 price_and_num_data = price_and_num.find_all('td')
 #시세현황표 안에 있는 숫자들 전부 가져오기
-for i in range(0, len(price_and_num_data)):
-    print(price_and_num_data[i].text)
-#시세현황표에 있는 숫자들을 find_all 하면 표의 왼쪽에서 오른쪽으로, 위에서 아래로 저장한다.
+#for i in range(0, len(price_and_num_data)):
+#    print(price_and_num_data[i].text)
+#시세현황표에 있는 숫자들을 find_all 하면 표의 왼쪽에서 오른쪽으로, 위에서 아래순으로 저장한다.
+my_zoo = web_data.find('div', {'class': 'um_table', 'id': 'svdMainGrid5'})
+#주주구분 현황
+my_zoo_data = price_and_num.find_all('td')
+#주주구분 현황 안에 있는 숫자들 전부 가져오기
+print(my_zoo_data[4])
 
 #ifrs_D_A = web_data.find('div', {'class': 'um_table', 'id': 'highlight_D_A'})
 #ifrs표 데이터 불러오기
