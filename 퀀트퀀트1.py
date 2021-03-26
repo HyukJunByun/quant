@@ -5,16 +5,6 @@ from openpyxl import Workbook
 from openpyxl import load_workbook
 import xlwings as xw
 
-code_data = pd.read_html('http://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13', header=0)[0]
-
-def make_code(x):
-    x = str(x)
-    return '0' * (6 - len(x)) + x
-
-code_data = code_data['종목코드']
-#['종목코드'] 요것만 하면 판다스에 종목코드가 리스트로 저장될까? ㅇㅇ 가능하네
-code_data = code_data.apply(make_code)
-
 kisrating_url = 'https://www.kisrating.com/ratingsStatistics/statics_spread.do'
 webbpage = requests.get(kisrating_url)
 webb_data = BeautifulSoup(webbpage.content, 'html.parser')
@@ -25,6 +15,16 @@ bbb_table = bbb.find_all('td')
 #회사채 수익률 표 숫자만 전부 가져오기
 bbb_data = bbb_table[98].text
 #회사채 BBB- 5년 수익률 가져오기 = 요구수익률
+
+code_data = pd.read_html('http://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13', header=0)[0]
+
+def make_code(x):
+    x = str(x)
+    return '0' * (6 - len(x)) + x
+
+code_data = code_data['종목코드']
+#['종목코드'] 요것만 하면 판다스에 종목코드가 리스트로 저장될까? ㅇㅇ 가능하네
+code_data = code_data.apply(make_code)
 
 #len(code_data
 for a in range(0, 100)):
@@ -194,18 +194,18 @@ for a in range(0, 100)):
     app = xw.apps.active
     app.quit()
 
-    wb2 = Workbook()
+wb2 = Workbook()
     #결과 기록할 엑셀 파일 만들기
-    ws = wb2.active
-    ws.title = "result"
+ws = wb2.active
+ws.title = "result"
     #엑셀 결과시트 이름 지정
-    yo = 2
-    for z in range(0, len(buy_zoo)):
-        #b열에 매수할 종목들 하나씩 기록
-        ws['B' + str(yo)] = buy_zoo[z]
-        yo += 1
+yo = 2
+for z in range(0, len(buy_zoo)):
+    #b열에 매수할 종목들 하나씩 기록
+    ws['B' + str(yo)] = buy_zoo[z]
+    yo += 1
 
-    wb2.save('G:\RESULT.xlsx')
+wb2.save('G:\RESULT.xlsx')
     #엑셀 파일 저장, 경로까지 적으면 원하는 위치 저장 가능. 디폴트 경로는 파이썬 코드가 있는 곳
     #ws.values 셀의 수식이 아닌 값만을 가져온다
     #G:\Hyuk_Rim.xlsx
