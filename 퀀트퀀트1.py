@@ -192,7 +192,8 @@ if wb3_result.range('C26').value <= wb3_result.range('C23').value:
     if wb3_result.range('I32').value >= 0.01:
         #배당수익률 1% 이상
         buy_zoo.append(wb3_data.range('B4').value)
-wb3.close()
+app = xw.apps.active
+app.quit()
 
 wb2 = Workbook()
 #결과 기록할 엑셀 파일 만들기
