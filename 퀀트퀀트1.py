@@ -179,18 +179,11 @@ buy_zoo = []
 #매수할 주식 목록
 
 wb.save('G:\Hyuk_Rim_v4.xlsx')
-#엑셀 파일 잘 돌아가는지 테스트용
-#wb.close()
-#엑셀 계산시트 종료(저장x)
 wb.close()
-"""
-if wb_result['C26'].value <= wb_result['C23'].value:
-    # 매수가격 >= 현재가격, 인데 일단 테스트 용으로 뒤집어 놓음!!!
-    if wb_result['I32'].value >= 0.01:
-        #배당수익률 1% 이상
-        buy_zoo.append(wb_data['B4'].value)
-"""
+#엑셀 계산시트 종료
+
 wb3 = xw.Book('G:\Hyuk_Rim_v4.xlsx')
+#xlwings 이용해서 엑셀의 셀값 가져오기
 wb3_result = wb3.sheets['Result']
 wb3_data = wb3.sheets['Data']
 
@@ -199,6 +192,7 @@ if wb3_result.range('C26').value <= wb3_result.range('C23').value:
     if wb3_result.range('I32').value >= 0.01:
         #배당수익률 1% 이상
         buy_zoo.append(wb3_data.range('B4').value)
+wb3.close()
 
 wb2 = Workbook()
 #결과 기록할 엑셀 파일 만들기
