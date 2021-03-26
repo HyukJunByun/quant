@@ -51,6 +51,13 @@ ifrs_DA = ifrs_D_A.find_all('td')
 ifrs_DQ = ifrs_D_Q.find_all('td')
 ifrs_BQ = ifrs_B_Q.find_all('td')
 #ifrs 숫자들 전부 가져오기
+ifrs_DA_date = ifrs_D_A.find_all('th', {'scope': 'col'})
+#ifrs(연결-연간) 날짜 데이터
+ifrs_DQ_date = ifrs_D_Q.find_all('th', {'scope': 'col'})
+#ifrs(연결-분기) 날짜 데이터
+ifrs_BQ_date = ifrs_B_Q.find_all('th', {'scope': 'col'})
+#ifrs(개별-분기) 날짜 데이터
+
 
 kisrating_url = 'https://www.kisrating.com/ratingsStatistics/statics_spread.do'
 webbpage = requests.get(kisrating_url)
@@ -64,14 +71,14 @@ bbb_data = bbb_table[98].text
 #회사채 BBB- 5년 수익률 가져오기 = 요구수익률
 
 
-wb = load_workbook('G:\Hyuk_Rim.xlsx')
+wb = load_workbook('G:\Hyuk_Rim_v4.xlsx')                             #엑셀 파일 이름 바뀔때마다 업데이트!!
 #계산할 엑셀 파일 불러오기
-wb_result = wb['result']
+wb_result = wb['Result']
 #result 워크시트
 wb_data = wb['Data']
 #Data 워크시트
 
-wb_result['D10'] = bbb_data
+wb_result['D11'] = bbb_data
 #요구수익률 넣기
 wb_data['B4'] = corp_name
 #주식이름 넣기
@@ -81,11 +88,27 @@ wb_data['i7'] = price_and_num_data[10].text
 #발행주식수 넣기
 wb_data['i8'] = my_zoo_data[17].text
 #자기주식수 넣기
-line = 0
-row = 27
-for b in range(0, 21):
-    #ifrs(연결-연간) 숫자 데이터 엑셀에 넣기  
-    samsung = 66     
+
+line = 0 #ifrs 표 안에 데이터 순번. 표 안의 모든 데이터를 추출하기 위함
+row = 27 #엑셀 ifrs(연결-연간)표 첫번째 셀의 행 번호
+for b in range(0, 12):
+    #range 12는 ifrs 표의 행(매출액~자본금) 개수(세로 길이)
+    samsung = 66                                                      #ifrs(연결-연간) 숫자 데이터(매출액~자본금) 엑셀에 넣기    
+    #samsung -> chr(66)이 대문자 알파벳 B를 뜻함, ifrs 표의 첫번째 셀 열 번호    
+    for c in range(0, 8):
+        #range 8은 ifrs 표의 열 개수(가로 길이)
+        rrow = str(row)
+        col = chr(samsung)
+        cell = col + rrow
+        wb_data[cell] = ifrs_DA[line].text
+        line += 1
+        samsung += 1
+    row += 1
+
+line = line + 4 * 8
+#ifrs 표에서 중간 내용 건너뛰고 roa 정보 순번
+for bbbb in range(0, 5):
+    samsung = 66                                                      #ifrs(연결-연간) 숫자 데이터(ROA~DPS) 엑셀에 넣기       
     for c in range(0, 8):
         rrow = str(row)
         col = chr(samsung)
@@ -94,29 +117,29 @@ for b in range(0, 21):
         line += 1
         samsung += 1
     row += 1
-line = 192
+
+line = line + 2 * 8
 samsung = 66
 for cc in range(0, 8):
-    #연결-연간 마지막 배당수익률 공간 부족해서 땜빵...
-        rrow = str(48)
+        rrow = str(row)                                               #frs(연결-연간) 숫자 데이터(배당수익률) 엑셀에 넣기   
         col = chr(samsung)
         cell = col + rrow
         wb_data[cell] = ifrs_DA[line].text
         line += 1
         samsung += 1
 
-ifrs_DAA = ifrs_D_A.find_all('th', {'scope': 'col'})
-#ifrs(연결-연간) 날짜 데이터
-for d in range(0, 5):
-    #ifrs(연결-연간) 날짜 데이터 엑셀에 넣기 
+
+for d in range(0, 5):                                                 #ifrs(연결-연간) 날짜 데이터 엑셀에 넣기 
+    #range 5 -> 날짜 넣는칸의 총 개수
     e = d + 66
+    #날짜 넣는칸의 열 위치(알파벳)
     g = chr(e) + str(25)
-    wb_data[g] = ifrs_DAA[d + 2].text
+    #str(25) -> 날짜 넣는칸의 행 위치
+    wb_data[g] = ifrs_DA_date[d + 2].text
 
 line = 0
 row = 51
-for b in range(0, 12):
-    #ifrs(연결-분기) 숫자 데이터 엑셀에 넣기  
+for b in range(0, 12):                                                #ifrs(연결-분기) 숫자 데이터 엑셀에 넣기  
     samsung = 66     
     for c in range(0, 8):
         rrow = str(row)
@@ -127,18 +150,15 @@ for b in range(0, 12):
         samsung += 1
     row += 1
 
-ifrs_DQQ = ifrs_D_Q.find_all('th', {'scope': 'col'})
-#ifrs(연결-분기) 날짜 데이터
-for d in range(0, 5):
-    #ifrs(연결-분기) 날짜 데이터 엑셀에 넣기 
+
+for d in range(0, 5):                                                 #ifrs(연결-분기) 날짜 데이터 엑셀에 넣기 
     e = d + 66
     g = chr(e) + str(50)
-    wb_data[g] = ifrs_DQQ[d + 2].text
+    wb_data[g] = ifrs_DQ_date[d + 2].text
 
 line = 0
 row = 69
-for b in range(0, 8):
-    #ifrs(개별-분기) 숫자 데이터 엑셀에 넣기  
+for b in range(0, 8):                                                 #ifrs(개별-분기) 숫자 데이터 엑셀에 넣기  
     samsung = 66     
     for c in range(0, 8):
         rrow = str(row)
@@ -149,21 +169,19 @@ for b in range(0, 8):
         samsung += 1
     row += 1
 
-ifrs_BQQ = ifrs_B_Q.find_all('th', {'scope': 'col'})
-#ifrs(개별-분기) 날짜 데이터
-for d in range(0, 5):
-    #ifrs(개별-분기) 날짜 데이터 엑셀에 넣기 
+for d in range(0, 5):                                                 #ifrs(개별-분기) 날짜 데이터 엑셀에 넣기 
     e = d + 66
     g = chr(e) + str(68)
-    wb_data[g] = ifrs_BQQ[d + 2].text
+    wb_data[g] = ifrs_BQ_date[d + 2].text
 
 buy_zoo = []
 #매수할 주식 목록
-if wb_result['C26'].value >= wb_result['C23'].value:
+if wb_result['C26'].value <= wb_result['C23'].value:
+    # 매수가격 >= 현재가격, 인데 일단 테스트 용으로 뒤집어 놓음!!!
     if wb_result['I31'].value >= 0.01:
+        #배당수익률 1% 이상
         buy_zoo.append(wb_data['B4'].value)
 
-#배당수익률 1% 이상, 매수가격 > 현재주가 인 종목들을 골라서 다른 엑셀 파일에 정리해야해
 wb.close()
 #엑셀 계산시트 종료(저장x)
 
@@ -172,7 +190,7 @@ wb2 = Workbook()
 ws = wb2.active
 ws.title = "result"
 #엑셀 결과시트 이름 지정
-yo = 1
+yo = 2
 for z in range(0, len(buy_zoo)):
     #b열에 매수할 종목들 하나씩 기록
     ws['B' + str(yo)] = buy_zoo[z]
