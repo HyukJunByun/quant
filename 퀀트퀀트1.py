@@ -3,6 +3,7 @@ import requests
 from bs4 import BeautifulSoup
 from openpyxl import Workbook
 from openpyxl import load_workbook
+import xlwings as xw
 
 code_data = pd.read_html('http://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13', header=0)[0]
 
@@ -118,7 +119,7 @@ for bbbb in range(0, 5):
         samsung += 1
     row += 1
 
-line = line + 2 * 8
+line = line + 3 * 8
 samsung = 66
 for cc in range(0, 8):
         rrow = str(row)                                               #frs(연결-연간) 숫자 데이터(배당수익률) 엑셀에 넣기   
@@ -176,14 +177,28 @@ for d in range(0, 5):                                                 #ifrs(개�
 
 buy_zoo = []
 #매수할 주식 목록
+
+wb.save('G:\Hyuk_Rim_v4.xlsx')
+#엑셀 파일 잘 돌아가는지 테스트용
+#wb.close()
+#엑셀 계산시트 종료(저장x)
+wb.close()
+"""
 if wb_result['C26'].value <= wb_result['C23'].value:
     # 매수가격 >= 현재가격, 인데 일단 테스트 용으로 뒤집어 놓음!!!
-    if wb_result['I31'].value >= 0.01:
+    if wb_result['I32'].value >= 0.01:
         #배당수익률 1% 이상
         buy_zoo.append(wb_data['B4'].value)
+"""
+wb3 = xw.Book('G:\Hyuk_Rim_v4.xlsx')
+wb3_result = wb3.sheets['Result']
+wb3_data = wb3.sheets['Data']
 
-wb.close()
-#엑셀 계산시트 종료(저장x)
+if wb3_result.range('C26').value <= wb3_result.range('C23').value:
+    # 매수가격 >= 현재가격, 인데 일단 테스트 용으로 뒤집어 놓음!!!
+    if wb3_result.range('I32').value >= 0.01:
+        #배당수익률 1% 이상
+        buy_zoo.append(wb3_data.range('B4').value)
 
 wb2 = Workbook()
 #결과 기록할 엑셀 파일 만들기
