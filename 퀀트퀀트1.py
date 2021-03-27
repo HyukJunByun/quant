@@ -1,7 +1,6 @@
 import pandas as pd
 import requests
 from bs4 import BeautifulSoup, SoupStrainer
-# from openpyxl import Workbook, load_workbook
 import xlwings as xw
 import time
 import gc
@@ -41,8 +40,12 @@ def hms(s):
     print('소요시간 = ', hours, '시간 ', mu, '분 ', ss, '초')
 
 
-buy_zoo = []
+buy_zoo = ()
 # 매수할 주식 목록
+buy_zoo_bay = ()
+# 매수할 주식 평균 배당
+buy_zoo_price = ()
+# 매수할 주식 적정가 대비%
 
 code_data = code_data['종목코드']
 # ['종목코드'] 요것만 하면 판다스에 종목코드가 리스트로 저장될까? ㅇㅇ 가능하네
@@ -207,30 +210,33 @@ for a in range(300, 600):
                     wb_data.range(g).value = ifrs_BQ_date[d + 2].text
 
                 if wb_result.range('C26').value >= wb_result.range('C23').value:
-                    # 매수가격 >= 현재가격, 인데 일단 테스트 용으로 뒤집어 놓음!!!
+                    # 매수가격 >= 현재가격
                     if wb_result.range('I31').value >= 0.01:
                         # 배당수익률 1% 이상
-                        buy_zoo.append(wb_data.range('B4').value)
+                        if wb_result.range('F27').value != '역배열':
+                            # roe > 요구수익률
+                            buy_zoo.append(wb_data.range('B4').value)
+                            buy_zoo_bay.append(wb_data.range('I31').value)
+                            buy_zoo_price.append(wb_data.range('D24').value)
                 print(a)
     except AttributeError:
         print('에러 = ', a)
     except IndexError:
         print('index 에러 = ', a)
     gc.collect()
-    # wb.close()
     #불필요한 데이터 전부 삭제
 
-
-wb2 = xw.Book()
-# 결과 기록할 엑셀 파일 만들기
-yo = 2
+wb2 = xw.Book('G:\RESULT.xlsx')     
+# 결과 기록 엑셀 파일 불러오기
+yo = 3
 for z in range(0, len(buy_zoo)):
     # b열에 매수할 종목들 하나씩 기록
     wb2.sheets[0].range('B' + str(yo)).value = buy_zoo[z]
+    wb2.sheets[0].range('C' + str(yo)).value = buy_zoo_bay[z]
+    wb2.sheets[0].range('D' + str(yo)).value = buy_zoo_price[z]
     yo += 1
 
 wb2.save('G:\RESULT.xlsx')
 hms(time.time() - start)
 # 엑셀 파일 저장, 경로까지 적으면 원하는 위치 저장 가능. 디폴트 경로는 파이썬 코드가 있는 곳
-# ws.values 셀의 수식이 아닌 값만을 가져온다
 # G:\Hyuk_Rim.xlsx
