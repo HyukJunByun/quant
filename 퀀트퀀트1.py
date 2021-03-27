@@ -1,25 +1,27 @@
 import pandas as pd
 import requests
-from bs4 import BeautifulSoup
-from openpyxl import Workbook, load_workbook
+from bs4 import BeautifulSoup, SoupStrainer
+# from openpyxl import Workbook, load_workbook
 import xlwings as xw
 import time
 import gc
+# import cchardet
 
 kisrating_url = 'https://www.kisrating.com/ratingsStatistics/statics_spread.do'
 webbpage = requests.get(kisrating_url)
-webb_data = BeautifulSoup(webbpage.content, 'lxml')
 # 회사채 수익률 웹페이지 가져오기
-bbb = webb_data.find('div', {'class': 'table_ty1'})
+only_table = SoupStrainer('div', {'class': 'table_ty1'})
+webb_data = BeautifulSoup(webbpage.content, 'lxml', parse_only=only_table)
 # 회사채 수익률 표 가져오기
+bbb_table = webb_data.find_all('td')
+# 회사채 수익률 표 숫자만 전부 가져오기
+bbb_data = bbb_table[98].text
+# 회사채 BBB- 5년 수익률 가져오기 = 요구수익률
 webb_data.decompose()
 # 정보 빼고 나면 웹페이지는 삭제(스피드업)
 webbpage.close()
 webbpage = None
-bbb_table = bbb.find_all('td')
-# 회사채 수익률 표 숫자만 전부 가져오기
-bbb_data = bbb_table[98].text
-# 회사채 BBB- 5년 수익률 가져오기 = 요구수익률
+del(webbpage)
 
 
 code_data = pd.read_html('http://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13', header=0)[0]
@@ -46,32 +48,26 @@ code_data = code_data['종목코드']
 # ['종목코드'] 요것만 하면 판다스에 종목코드가 리스트로 저장될까? ㅇㅇ 가능하네
 code_data = code_data.apply(make_code)
 
+main_data = SoupStrainer('div', {'class': 'um_table'})
+fics_filter = SoupStrainer('span', {'class': "stxt stxt2"})
+
 # len(code_data)
-for a in range(0, len(code_data)):
-    # print(a)
-    # 에러확인용
+for a in range(80, 90:
     code_num = code_data[a]
     fnguide_url = "http://comp.fnguide.com/SVO2/ASP/SVD_Main.asp?pGB=1&gicode=A" + code_num + "&cID=&MenuYn=Y&ReportGB=D&NewMenuID=Y&stkGb=701"
     # 종목코드 표에 있는 모든 법인 접속해봄, 일단 100종목
 
-# fnguide_url = "https://comp.fnguide.com/SVO2/ASP/SVD_main.asp?pGB=1&gicode=A005930&cID=&MenuYn=Y&ReportGB=&NewMenuID=11&stkGb=&strResearchYN="
-# 테스트 쉬우라고 일단 삼성전자 url
-
     webpage = requests.get(fnguide_url)
-    web_data = BeautifulSoup(webpage.content, 'lxml')
+    web_data = BeautifulSoup(webpage.content, 'lxml', parse_only=main_data)
+    fics_data = BeautifulSoup(webpage.content, 'lxml', parse_only=fics_filter)
     # 웹페이지 정보 가져오기
     try:
-        corp_name = web_data.find('h1', {'id': 'giName'}).text
-        # 주식이름            +++태그 하나만 가져와도 {}를 붙여야하네, 참고로 이거는 태그까지 전부 포함한 데이터라 .text로 문자만 뽑아내야함
+        corp_name = BeautifulSoup(webpage.content, 'lxml', parse_only=SoupStrainer('h1', {'id': 'giName'})).find_all('h1', {'id': 'giName'})[0].text
+        # 주식이름
         price_and_num = web_data.find('div', {'class': 'um_table', 'id': 'svdMainGrid1'})
         # 시세현황표
         price_and_num_data = price_and_num.find_all('td')
         # 시세현황표 안에 있는 숫자들 전부 가져오기
-        """
-        for i in range(0, len(price_and_num_data)):
-            print(price_and_num_data[i].text)
-        #시세현황표에 있는 숫자들을 find_all 하면 표의 왼쪽에서 오른쪽으로, 위에서 아래순으로 저장한다.
-        """
         my_zoo = web_data.find('div', {'class': 'um_table', 'id': 'svdMainGrid5'})
         # 주주구분 현황
         my_zoo_data = my_zoo.find_all('td')
@@ -86,9 +82,10 @@ for a in range(0, len(code_data)):
         # 분석 끝낸 웹페이지는 삭제
         webpage.close()
         webpage = None
+        my_zoo = None
+        price_and_num = None
         #웹페이지 삭제
-        gc.collect()
-        #불필요한 데이터 전부 삭제
+
         ifrs_DA = ifrs_D_A.find_all('td')
         ifrs_DQ = ifrs_D_Q.find_all('td')
         ifrs_BQ = ifrs_B_Q.find_all('td')
@@ -98,29 +95,30 @@ for a in range(0, len(code_data)):
         ifrs_DQ_date = ifrs_D_Q.find_all('th', {'scope': 'col'})
         # ifrs(연결-분기) 날짜 데이터
         ifrs_BQ_date = ifrs_B_Q.find_all('th', {'scope': 'col'})
+        ifrs_D_A = None
+        ifrs_D_Q = None
+        ifrs_B_Q = None
+        #불필요한 변수들 삭제
 
         # ifrs(개별-분기) 날짜 데이터
         if(ifrs_DA[138].text != ifrs_DA[199].text):
             # (마지막 사업보고서 기준) 2년전 roe 정보 없으면 취급하지 않음
             # 199는 연결-연간 표에서 가장 먼 컨센서스 배당수익률. 항상 빈칸이리 카더라
-            if(web_data.find_all('span', {'class': "stxt stxt2"})[0].text != 'FICS  창업투자 및 종금'):
+            if(fics_data.find_all('span', {'class': "stxt stxt2"})[0].text != 'FICS  창업투자 및 종금'):
+                fics_data.decompose()
                 # 기업인수목적회사 정보가 너무 부족해서 걍 거르기
-                wb = load_workbook('G:\Hyuk_Rim_v5.xlsx')                             # 엑셀 파일 이름 바뀔때마다 업데이트!!
-                # 계산할 엑셀 파일 불러오기
-                wb_result = wb['Result']
-                # result 워크시트
-                wb_data = wb['Data']
-                # Data 워크시트
-
-                wb_result['D11'] = bbb_data
+                wb = xw.Book('G:\Hyuk_Rim_v5.xlsx')                                          # 엑셀 이름 업데이트!!
+                wb_result = wb.sheets['Result']
+                wb_data = wb.sheets['Data'] 
+                wb_result.range('D11').value = bbb_data
                 # 요구수익률 넣기
-                wb_data['B4'] = corp_name
+                wb_data.range('B4').value = corp_name
                 # 주식이름 넣기
-                wb_data['i5'] = price_and_num_data[0].text
+                wb_data.range('i5').value = price_and_num_data[0].text
                 # 주식 현재가 넣기
-                wb_data['i7'] = price_and_num_data[10].text
+                wb_data.range('i7').value = price_and_num_data[10].text
                 # 발행주식수 넣기
-                wb_data['i8'] = my_zoo_data[17].text
+                wb_data.range('i8').value = my_zoo_data[17].text
                 # 자기주식수 넣기
 
                 line = 0 # ifrs 표 안에 데이터 순번. 표 안의 모든 데이터를 추출하기 위함
@@ -134,7 +132,7 @@ for a in range(0, len(code_data)):
                         rrow = str(row)
                         col = chr(samsung)
                         cell = col + rrow
-                        wb_data[cell] = ifrs_DA[line].text
+                        wb_data.range(cell).value = ifrs_DA[line].text
                         line += 1
                         samsung += 1
                     row += 1
@@ -147,7 +145,7 @@ for a in range(0, len(code_data)):
                         rrow = str(row)
                         col = chr(samsung)
                         cell = col + rrow
-                        wb_data[cell] = ifrs_DA[line].text
+                        wb_data.range(cell).value = ifrs_DA[line].text
                         line += 1
                         samsung += 1
                     row += 1
@@ -158,7 +156,7 @@ for a in range(0, len(code_data)):
                         rrow = str(row)                                               # frs(연결-연간) 숫자 데이터(배당수익률) 엑셀에 넣기
                         col = chr(samsung)
                         cell = col + rrow
-                        wb_data[cell] = ifrs_DA[line].text
+                        wb_data.range(cell).value = ifrs_DA[line].text
                         line += 1
                         samsung += 1
 
@@ -169,7 +167,7 @@ for a in range(0, len(code_data)):
                     # 날짜 넣는칸의 열 위치(알파벳)
                     g = chr(e) + str(25)
                     # str(25) -> 날짜 넣는칸의 행 위치
-                    wb_data[g] = ifrs_DA_date[d + 2].text
+                    wb_data.range(g).value = ifrs_DA_date[d + 2].text
 
                 line = 0
                 row = 51
@@ -179,7 +177,7 @@ for a in range(0, len(code_data)):
                         rrow = str(row)
                         col = chr(samsung)
                         cell = col + rrow
-                        wb_data[cell] = ifrs_DQ[line].text
+                        wb_data.range(cell).value = ifrs_DQ[line].text
                         line += 1
                         samsung += 1
                     row += 1
@@ -188,7 +186,7 @@ for a in range(0, len(code_data)):
                 for d in range(0, 5):                                                 # ifrs(연결-분기) 날짜 데이터 엑셀에 넣기
                     e = d + 66
                     g = chr(e) + str(50)
-                    wb_data[g] = ifrs_DQ_date[d + 2].text
+                    wb_data.range(g).value = ifrs_DQ_date[d + 2].text
 
                 line = 0
                 row = 69
@@ -198,7 +196,7 @@ for a in range(0, len(code_data)):
                         rrow = str(row)
                         col = chr(samsung)
                         cell = col + rrow
-                        wb_data[cell] = ifrs_BQ[line].text
+                        wb_data.range(cell).value = ifrs_BQ[line].text
                         line += 1
                         samsung += 1
                     row += 1
@@ -206,41 +204,29 @@ for a in range(0, len(code_data)):
                 for d in range(0, 5):                                                 # ifrs(개별-분기) 날짜 데이터 엑셀에 넣기
                     e = d + 66
                     g = chr(e) + str(68)
-                    wb_data[g] = ifrs_BQ_date[d + 2].text
+                    wb_data.range(g).value = ifrs_BQ_date[d + 2].text
 
-
-                wb.save('G:\Hyuk_Rim_v5.xlsx')                                 # 엑셀 파일 이름 바뀔때마다 업데이트!!
-                wb.close()
-                # 엑셀 계산시트 종료
-
-                wb3 = xw.Book('G:\Hyuk_Rim_v5.xlsx')                          # 엑셀 파일 이름 바뀔때마다 업데이트!!
-                # xlwings 이용해서 엑셀의 셀값 가져오기
-                wb3_result = wb3.sheets['Result']
-                wb3_data = wb3.sheets['Data']
-
-                if wb3_result.range('C26').value >= wb3_result.range('C23').value:
+                if wb_result.range('C26').value >= wb_result.range('C23').value:
                     # 매수가격 >= 현재가격, 인데 일단 테스트 용으로 뒤집어 놓음!!!
-                    if wb3_result.range('I31').value >= 0.01:
+                    if wb_result.range('I31').value >= 0.01:
                         # 배당수익률 1% 이상
-                        buy_zoo.append(wb3_data.range('B4').value)
-                app = xw.apps.active
-                app.quit()
+                        buy_zoo.append(wb_data.range('B4').value)
                 print(a)
     except AttributeError:
         print('에러 = ', a)
     except IndexError:
         print('index 에러 = ', a)
+    gc.collect()
+    wb.close()
+    #불필요한 데이터 전부 삭제
 
 
-wb2 = Workbook()
+wb2 = xw.Book()
 # 결과 기록할 엑셀 파일 만들기
-ws = wb2.active
-ws.title = "result"
-# 엑셀 결과시트 이름 지정
 yo = 2
 for z in range(0, len(buy_zoo)):
     # b열에 매수할 종목들 하나씩 기록
-    ws['B' + str(yo)] = buy_zoo[z]
+    wb2.sheets[0].range('B' + str(yo)).value = buy_zoo[z]
     yo += 1
 
 wb2.save('G:\RESULT.xlsx')
