@@ -1,21 +1,26 @@
 import pandas as pd
 import requests
 from bs4 import BeautifulSoup
-from openpyxl import Workbook
-from openpyxl import load_workbook
+from openpyxl import Workbook, load_workbook
 import xlwings as xw
 import time
+import gc
 
 kisrating_url = 'https://www.kisrating.com/ratingsStatistics/statics_spread.do'
 webbpage = requests.get(kisrating_url)
-webb_data = BeautifulSoup(webbpage.content, 'html.parser')
+webb_data = BeautifulSoup(webbpage.content, 'lxml')
 # 회사채 수익률 웹페이지 가져오기
 bbb = webb_data.find('div', {'class': 'table_ty1'})
 # 회사채 수익률 표 가져오기
+webb_data.decompose()
+# 정보 빼고 나면 웹페이지는 삭제(스피드업)
+webbpage.close()
+webbpage = None
 bbb_table = bbb.find_all('td')
 # 회사채 수익률 표 숫자만 전부 가져오기
 bbb_data = bbb_table[98].text
 # 회사채 BBB- 5년 수익률 가져오기 = 요구수익률
+
 
 code_data = pd.read_html('http://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13', header=0)[0]
 start = time.time()
@@ -53,7 +58,7 @@ for a in range(0, len(code_data)):
 # 테스트 쉬우라고 일단 삼성전자 url
 
     webpage = requests.get(fnguide_url)
-    web_data = BeautifulSoup(webpage.content, 'html.parser')
+    web_data = BeautifulSoup(webpage.content, 'lxml')
     # 웹페이지 정보 가져오기
     try:
         corp_name = web_data.find('h1', {'id': 'giName'}).text
@@ -77,7 +82,13 @@ for a in range(0, len(code_data)):
         # ifrs(연결-분기) 데이터 불러오기
         ifrs_B_Q = web_data.find('div', {'class': 'um_table', 'id': 'highlight_B_Q'})
         # ifrs(개별-분기) 데이터 불러오기
-
+        web_data.decompose()
+        # 분석 끝낸 웹페이지는 삭제
+        webpage.close()
+        webpage = None
+        #웹페이지 삭제
+        gc.collect()
+        #불필요한 데이터 전부 삭제
         ifrs_DA = ifrs_D_A.find_all('td')
         ifrs_DQ = ifrs_D_Q.find_all('td')
         ifrs_BQ = ifrs_B_Q.find_all('td')
@@ -219,6 +230,7 @@ for a in range(0, len(code_data)):
         print('에러 = ', a)
     except IndexError:
         print('index 에러 = ', a)
+
 
 wb2 = Workbook()
 # 결과 기록할 엑셀 파일 만들기
