@@ -52,7 +52,7 @@ main_data = SoupStrainer('div', {'class': 'um_table'})
 fics_filter = SoupStrainer('span', {'class': "stxt stxt2"})
 
 # len(code_data)
-for a in range(80, 90:
+for a in range(300, 600):
     code_num = code_data[a]
     fnguide_url = "http://comp.fnguide.com/SVO2/ASP/SVD_Main.asp?pGB=1&gicode=A" + code_num + "&cID=&MenuYn=Y&ReportGB=D&NewMenuID=Y&stkGb=701"
     # 종목코드 표에 있는 모든 법인 접속해봄, 일단 100종목
@@ -107,7 +107,7 @@ for a in range(80, 90:
             if(fics_data.find_all('span', {'class': "stxt stxt2"})[0].text != 'FICS  창업투자 및 종금'):
                 fics_data.decompose()
                 # 기업인수목적회사 정보가 너무 부족해서 걍 거르기
-                wb = xw.Book('G:\Hyuk_Rim_v5.xlsx')                                          # 엑셀 이름 업데이트!!
+                wb = xw.Book('G:\Hyuk_Rim_v6.xlsx')                                          # 엑셀 이름 업데이트!!
                 wb_result = wb.sheets['Result']
                 wb_data = wb.sheets['Data'] 
                 wb_result.range('D11').value = bbb_data
@@ -217,7 +217,7 @@ for a in range(80, 90:
     except IndexError:
         print('index 에러 = ', a)
     gc.collect()
-    wb.close()
+    # wb.close()
     #불필요한 데이터 전부 삭제
 
 
