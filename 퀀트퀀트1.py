@@ -4,7 +4,6 @@ from bs4 import BeautifulSoup, SoupStrainer
 import xlwings as xw
 import time
 import gc
-# import cchardet
 
 kisrating_url = 'https://www.kisrating.com/ratingsStatistics/statics_spread.do'
 webbpage = requests.get(kisrating_url)
@@ -40,25 +39,31 @@ def hms(s):
     print('소요시간 = ', hours, '시간 ', mu, '분 ', ss, '초')
 
 
-buy_zoo = ()
+buy_zoo = []
 # 매수할 주식 목록
-buy_zoo_bay = ()
-# 매수할 주식 평균 배당
-buy_zoo_price = ()
+buy_zoo_price = []
 # 매수할 주식 적정가 대비%
+buy_zoo_low_price = []
+# 매수가격
+buy_zoo_good_price = []
+# 적정가
+buy_zoo_high_price = []
+# 매도가격
+buy_zoo_code = []
+# 종목코드
 
 code_data = code_data['종목코드']
-# ['종목코드'] 요것만 하면 판다스에 종목코드가 리스트로 저장될까? ㅇㅇ 가능하네
+# ['종목코드'] 요것만 하면 판다스에 종목코드가 데이터프레임으로 저장될까? ㅇㅇ 가능하네
 code_data = code_data.apply(make_code)
 
 main_data = SoupStrainer('div', {'class': 'um_table'})
 fics_filter = SoupStrainer('span', {'class': "stxt stxt2"})
 
 # len(code_data)
-for a in range(300, 600):
+for a in range(0, len(code_data)):
     code_num = code_data[a]
-    fnguide_url = "http://comp.fnguide.com/SVO2/ASP/SVD_Main.asp?pGB=1&gicode=A" + code_num + "&cID=&MenuYn=Y&ReportGB=D&NewMenuID=Y&stkGb=701"
-    # 종목코드 표에 있는 모든 법인 접속해봄, 일단 100종목
+    fnguide_url = "http://comp.fnguide.com/SVO2/ASP/SVD_Main.asp?pGB=1&gicode=A" + code_data[a] + "&cID=&MenuYn=Y&ReportGB=D&NewMenuID=Y&stkGb=701"
+    # 종목코드 표에 있는 모든 법인 접속해봄, 현재(1~300)
 
     webpage = requests.get(fnguide_url)
     web_data = BeautifulSoup(webpage.content, 'lxml', parse_only=main_data)
@@ -112,7 +117,7 @@ for a in range(300, 600):
                 # 기업인수목적회사 정보가 너무 부족해서 걍 거르기
                 wb = xw.Book('G:\Hyuk_Rim_v6.xlsx')                                          # 엑셀 이름 업데이트!!
                 wb_result = wb.sheets['Result']
-                wb_data = wb.sheets['Data'] 
+                wb_data = wb.sheets['Data']
                 wb_result.range('D11').value = bbb_data
                 # 요구수익률 넣기
                 wb_data.range('B4').value = corp_name
@@ -215,9 +220,12 @@ for a in range(300, 600):
                         # 배당수익률 1% 이상
                         if wb_result.range('F27').value != '역배열':
                             # roe > 요구수익률
+                            buy_zoo_code.append(code_num)
                             buy_zoo.append(wb_data.range('B4').value)
-                            buy_zoo_bay.append(wb_data.range('I31').value)
-                            buy_zoo_price.append(wb_data.range('D24').value)
+                            buy_zoo_price.append(wb_result.range('D24').value)
+                            buy_zoo_low_price.append(wb_result.range('C26').value)
+                            buy_zoo_good_price.append(wb_result.range('C24').value)
+                            buy_zoo_high_price.append(wb_result.range('C25').value)
                 print(a)
     except AttributeError:
         print('에러 = ', a)
@@ -225,18 +233,19 @@ for a in range(300, 600):
         print('index 에러 = ', a)
     gc.collect()
     #불필요한 데이터 전부 삭제
-
-wb2 = xw.Book('G:\RESULT.xlsx')     
+code_data = None
+wb2 = xw.Book('G:\RESULT.xlsx')
 # 결과 기록 엑셀 파일 불러오기
-yo = 3
 for z in range(0, len(buy_zoo)):
     # b열에 매수할 종목들 하나씩 기록
-    wb2.sheets[0].range('B' + str(yo)).value = buy_zoo[z]
-    wb2.sheets[0].range('C' + str(yo)).value = buy_zoo_bay[z]
-    wb2.sheets[0].range('D' + str(yo)).value = buy_zoo_price[z]
-    yo += 1
+    wb2.sheets[0].range('B' + str(z + 3)).value = buy_zoo_code[z]
+    wb2.sheets[0].range('C' + str(z + 3)).value = buy_zoo[z]
+    wb2.sheets[0].range('D' + str(z + 3)).value = buy_zoo_price[z]
+    wb2.sheets[0].range('E' + str(z + 3)).value = buy_zoo_low_price[z]
+    wb2.sheets[0].range('F' + str(z + 3)).value = buy_zoo_good_price[z]
+    wb2.sheets[0].range('G' + str(z + 3)).value = buy_zoo_high_price[z]
 
-wb2.save('G:\RESULT.xlsx')
+# wb2.save('G:\RESULT.xlsx')
 hms(time.time() - start)
 # 엑셀 파일 저장, 경로까지 적으면 원하는 위치 저장 가능. 디폴트 경로는 파이썬 코드가 있는 곳
 # G:\Hyuk_Rim.xlsx
