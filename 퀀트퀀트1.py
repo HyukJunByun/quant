@@ -240,4 +240,3 @@ wb2.save('G:\RESULT.xlsx')
 hms(time.time() - start)
 # 엑셀 파일 저장, 경로까지 적으면 원하는 위치 저장 가능. 디폴트 경로는 파이썬 코드가 있는 곳
 # G:\Hyuk_Rim.xlsx
-#[빨강]▲ 0%;[파랑]▼ 0%
