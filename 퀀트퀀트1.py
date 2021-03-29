@@ -51,6 +51,11 @@ buy_zoo_high_price = []
 # 매도가격
 buy_zoo_code = []
 # 종목코드
+DA_row = []
+DQ_row = []
+BQ_row = []
+ebi_row = []
+# 매출액 등 위치에 따른 셀 위치 찾기 위한 리스트
 
 code_data = code_data['종목코드']
 # ['종목코드'] 요것만 하면 판다스에 종목코드가 데이터프레임으로 저장될까? ㅇㅇ 가능하네
@@ -59,62 +64,126 @@ code_data = code_data.apply(make_code)
 main_data = SoupStrainer('div', {'class': 'um_table'})
 fics_filter = SoupStrainer('span', {'class': "stxt stxt2"})
 
+fnguide_url = 'http://comp.fnguide.com/SVO2/ASP/SVD_Main.asp?pGB=1&gicode=A005930&cID=&MenuYn=Y&ReportGB=D&NewMenuID=Y&stkGb=701'
+webpage = requests.get(fnguide_url)
+web_data = BeautifulSoup(webpage.content, 'lxml', parse_only=main_data)
+ifrs_D_A = web_data.find('div', {'class': 'um_table', 'id': 'highlight_D_Y'})
+# ifrs(연결-연간) 데이터 불러오기
+ifrs_D_Q = web_data.find('div', {'class': 'um_table', 'id': 'highlight_D_Q'})
+# ifrs(연결-분기) 데이터 불러오기
+ifrs_B_Q = web_data.find('div', {'class': 'um_table', 'id': 'highlight_B_Q'})
+# ifrs(개별-분기) 데이터 불러오기
+ev_ebita = web_data.find('div', {'class': 'um_table', 'id': 'svdMainGrid10D'})
+#ev/ebita 있는 표 불러오기
+web_data.decompose()
+webpage.close()
+webpage = None
+fnguide_url = None
+ifrs_DA_row = ifrs_D_A.find_all('th', {'scope': 'row'})
+# ifrs(연결-연간) 열 데이터
+ifrs_DQ_row = ifrs_D_Q.find_all('th', {'scope': 'row'})
+# ifrs(연결-분기) 열 데이터
+ifrs_BQ_row = ifrs_B_Q.find_all('th', {'scope': 'row'})
+ev_ebita_row = ev_ebita.find_all('th', {'scope': 'row'})
+for i in ifrs_DA_row:
+    DA_row.append(i.text)
+for i in ifrs_DQ_row:
+    DQ_row.append(i.text)
+for i in ifrs_BQ_row:
+    BQ_row.append(i.text)
+for i in ev_ebita_row:
+    ebi_row.append(i.text)
+where_ebi = ebi_row.index('EV/EBITDA')
+ifrs_D_A = None
+ifrs_D_Q = None
+ifrs_B_Q = None
+ev_ebita = None
+ifrs_DA_row = None
+ifrs_DQ_row = None
+ifrs_BQ_row = None
+ev_ebita_row = None
+# 매출액 등 이름에 따라 셀 위치 찾기위한 인덱스 리스트
+
+
 # len(code_data)
 for a in range(0, len(code_data)):
     code_num = code_data[a]
-    fnguide_url = "http://comp.fnguide.com/SVO2/ASP/SVD_Main.asp?pGB=1&gicode=A" + code_data[a] + "&cID=&MenuYn=Y&ReportGB=D&NewMenuID=Y&stkGb=701"
-    # 종목코드 표에 있는 모든 법인 접속해봄, 현재(1~300)
+    if(code_num[0] != '9'):
+        #국내상장 해외기업 제외
+        fnguide_url = "http://comp.fnguide.com/SVO2/ASP/SVD_Main.asp?pGB=1&gicode=A" + code_num + "&cID=&MenuYn=Y&ReportGB=D&NewMenuID=Y&stkGb=701"
+        # 종목코드 표에 있는 모든 법인 접속
+        table = pd.read_html(fnguide_url)
 
-    webpage = requests.get(fnguide_url)
-    web_data = BeautifulSoup(webpage.content, 'lxml', parse_only=main_data)
-    fics_data = BeautifulSoup(webpage.content, 'lxml', parse_only=fics_filter)
-    # 웹페이지 정보 가져오기
-    try:
-        corp_name = BeautifulSoup(webpage.content, 'lxml', parse_only=SoupStrainer('h1', {'id': 'giName'})).find_all('h1', {'id': 'giName'})[0].text
-        # 주식이름
-        price_and_num = web_data.find('div', {'class': 'um_table', 'id': 'svdMainGrid1'})
-        # 시세현황표
-        price_and_num_data = price_and_num.find_all('td')
-        # 시세현황표 안에 있는 숫자들 전부 가져오기
-        my_zoo = web_data.find('div', {'class': 'um_table', 'id': 'svdMainGrid5'})
-        # 주주구분 현황
-        my_zoo_data = my_zoo.find_all('td')
-        # 주주구분 현황 안에 있는 숫자들 전부 가져오기
-        ifrs_D_A = web_data.find('div', {'class': 'um_table', 'id': 'highlight_D_Y'})
-        # ifrs(연결-연간) 데이터 불러오기
-        ifrs_D_Q = web_data.find('div', {'class': 'um_table', 'id': 'highlight_D_Q'})
-        # ifrs(연결-분기) 데이터 불러오기
-        ifrs_B_Q = web_data.find('div', {'class': 'um_table', 'id': 'highlight_B_Q'})
-        # ifrs(개별-분기) 데이터 불러오기
-        web_data.decompose()
-        # 분석 끝낸 웹페이지는 삭제
-        webpage.close()
-        webpage = None
-        my_zoo = None
-        price_and_num = None
-        #웹페이지 삭제
 
-        ifrs_DA = ifrs_D_A.find_all('td')
-        ifrs_DQ = ifrs_D_Q.find_all('td')
-        ifrs_BQ = ifrs_B_Q.find_all('td')
-        # ifrs 숫자들 전부 가져오기
-        ifrs_DA_date = ifrs_D_A.find_all('th', {'scope': 'col'})
-        # ifrs(연결-연간) 날짜 데이터
-        ifrs_DQ_date = ifrs_D_Q.find_all('th', {'scope': 'col'})
-        # ifrs(연결-분기) 날짜 데이터
-        ifrs_BQ_date = ifrs_B_Q.find_all('th', {'scope': 'col'})
-        ifrs_D_A = None
-        ifrs_D_Q = None
-        ifrs_B_Q = None
-        #불필요한 변수들 삭제
 
-        # ifrs(개별-분기) 날짜 데이터
-        if(ifrs_DA[138].text != ifrs_DA[199].text):
-            # (마지막 사업보고서 기준) 2년전 roe 정보 없으면 취급하지 않음
-            # 199는 연결-연간 표에서 가장 먼 컨센서스 배당수익률. 항상 빈칸이리 카더라
-            if(fics_data.find_all('span', {'class': "stxt stxt2"})[0].text != 'FICS  창업투자 및 종금'):
-                fics_data.decompose()
-                # 기업인수목적회사 정보가 너무 부족해서 걍 거르기
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        webpage = requests.get(fnguide_url)
+        web_data = BeautifulSoup(webpage.content, 'lxml', parse_only=main_data)
+        fics_data = BeautifulSoup(webpage.content, 'lxml', parse_only=fics_filter)
+        # 웹페이지 정보 가져오기
+        try:
+            corp_name = BeautifulSoup(webpage.content, 'lxml', parse_only=SoupStrainer('h1', {'id': 'giName'})).find_all('h1', {'id': 'giName'})[0].text
+            # 주식이름
+            price_and_num = web_data.find('div', {'class': 'um_table', 'id': 'svdMainGrid1'})
+            # 시세현황표
+            price_and_num_data = price_and_num.find_all('td')
+            # 시세현황표 안에 있는 숫자들 전부 가져오기
+            my_zoo = web_data.find('div', {'class': 'um_table', 'id': 'svdMainGrid5'})
+            # 주주구분 현황
+            my_zoo_data = my_zoo.find_all('td')
+            # 주주구분 현황 안에 있는 숫자들 전부 가져오기
+            ifrs_D_A = web_data.find('div', {'class': 'um_table', 'id': 'highlight_D_Y'})
+            # ifrs(연결-연간) 데이터 불러오기
+            ifrs_D_Q = web_data.find('div', {'class': 'um_table', 'id': 'highlight_D_Q'})
+            # ifrs(연결-분기) 데이터 불러오기
+            ifrs_B_Q = web_data.find('div', {'class': 'um_table', 'id': 'highlight_B_Q'})
+            # ifrs(개별-분기) 데이터 불러오기
+            ev_ebita = web_data.find('div', {'class': 'um_table', 'id': 'svdMainGrid10D'})
+            ev_ebita_data = ev_ebita.find_all('td')[where_ebi * 3].text
+            # ev/ebita 데이터 있는 표 불러오기, 18번째 숫자
+            web_data.decompose()
+            # 분석 끝낸 웹페이지는 삭제
+            webpage.close()
+            webpage = None
+            my_zoo = None
+            price_and_num = None
+            #웹페이지 삭제
+
+            ifrs_DA = ifrs_D_A.find_all('td')
+            ifrs_DQ = ifrs_D_Q.find_all('td')
+            ifrs_BQ = ifrs_B_Q.find_all('td')
+            # ifrs 숫자들 전부 가져오기
+            ifrs_DA_date = ifrs_D_A.find_all('th', {'scope': 'col'})
+            # ifrs(연결-연간) 날짜 데이터
+            ifrs_DQ_date = ifrs_D_Q.find_all('th', {'scope': 'col'})
+            # ifrs(연결-분기) 날짜 데이터
+            ifrs_BQ_date = ifrs_B_Q.find_all('th', {'scope': 'col'})
+            ifrs_D_A = None
+            ifrs_D_Q = None
+            ifrs_B_Q = None
+            #불필요한 변수들 삭제
+
+            # ifrs(개별-분기) 날짜 데이터
+            if(ifrs_DA[138].text != ifrs_DA[199].text and fics_data.find_all('span', {'class': "stxt stxt2"})[0].text != 'FICS  창업투자 및 종금'):
+                # (마지막 사업보고서 기준) 2년전 roe 정보 없으면 취급하지 않음
+                # 199는 연결-연간 표에서 가장 먼 컨센서스 배당수익률. 항상 빈칸이리 카더라
+                # 기업인수목적회사 필터링
+                fics_data.decompose()   
+                for i in ifrs_DA_row:
+
                 wb = xw.Book('G:\Hyuk_Rim_v6.xlsx')                                          # 엑셀 이름 업데이트!!
                 wb_result = wb.sheets['Result']
                 wb_data = wb.sheets['Data']
@@ -128,6 +197,10 @@ for a in range(0, len(code_data)):
                 # 발행주식수 넣기
                 wb_data.range('i8').value = my_zoo_data[17].text
                 # 자기주식수 넣기
+                wb_data.range('b47').value = ev_ebita_data
+                # ev/ebita 넣기
+                wb_data.range('f45').value = ifrs_DA[180].text
+                # 최근 pbr 넣기
 
                 line = 0 # ifrs 표 안에 데이터 순번. 표 안의 모든 데이터를 추출하기 위함
                 row = 27 # 엑셀 ifrs(연결-연간)표 첫번째 셀의 행 번호
@@ -227,12 +300,12 @@ for a in range(0, len(code_data)):
                             buy_zoo_good_price.append(wb_result.range('C24').value)
                             buy_zoo_high_price.append(wb_result.range('C25').value)
                 print(a)
-    except AttributeError:
-        print('에러 = ', a)
-    except IndexError:
-        print('index 에러 = ', a)
-    gc.collect()
-    #불필요한 데이터 전부 삭제
+        except AttributeError:
+            print('에러 = ', a)
+        except IndexError:
+            print('index 에러 = ', a)
+        gc.collect()
+        #불필요한 데이터 전부 삭제
 code_data = None
 wb2 = xw.Book('G:\RESULT.xlsx')
 # 결과 기록 엑셀 파일 불러오기
