@@ -63,7 +63,7 @@ code_data = code_data.apply(make_code)
 
 main_data = SoupStrainer('div', {'class': 'um_table'})
 fics_filter = SoupStrainer('span', {'class': "stxt stxt2"})
-
+"""
 fnguide_url = 'http://comp.fnguide.com/SVO2/ASP/SVD_Main.asp?pGB=1&gicode=A005930&cID=&MenuYn=Y&ReportGB=D&NewMenuID=Y&stkGb=701'
 webpage = requests.get(fnguide_url)
 web_data = BeautifulSoup(webpage.content, 'lxml', parse_only=main_data)
@@ -103,16 +103,19 @@ ifrs_DQ_row = None
 ifrs_BQ_row = None
 ev_ebita_row = None
 # 매출액 등 이름에 따라 셀 위치 찾기위한 인덱스 리스트
-
+"""
 
 # len(code_data)
-for a in range(0, len(code_data)):
+for a in range(0, 1):
     code_num = code_data[a]
     if(code_num[0] != '9'):
         #국내상장 해외기업 제외
-        fnguide_url = "http://comp.fnguide.com/SVO2/ASP/SVD_Main.asp?pGB=1&gicode=A" + code_num + "&cID=&MenuYn=Y&ReportGB=D&NewMenuID=Y&stkGb=701"
+        fnguide_url = 'http://comp.fnguide.com/SVO2/ASP/SVD_Main.asp?pGB=1&gicode=A005930&cID=&MenuYn=Y&ReportGB=D&NewMenuID=Y&stkGb=701'
+        # fnguide_url = "http://comp.fnguide.com/SVO2/ASP/SVD_Main.asp?pGB=1&gicode=A" + code_num + "&cID=&MenuYn=Y&ReportGB=D&NewMenuID=Y&stkGb=701"
         # 종목코드 표에 있는 모든 법인 접속
-        table = pd.read_html(fnguide_url)
+        tabbb = pd.read_html(fnguide_url, match='자본금', flavor='lxml', header=0, index_col=0, attrs={'class': 'us_table_ty1 h_fix zigbg_no'})[1]
+        # attrs는 무조건 table class만 적어
+        print(tabbb['Annual']['IFRS(연결)'])
 
 
 
@@ -130,6 +133,7 @@ for a in range(0, len(code_data)):
 
 
 
+        """
         webpage = requests.get(fnguide_url)
         web_data = BeautifulSoup(webpage.content, 'lxml', parse_only=main_data)
         fics_data = BeautifulSoup(webpage.content, 'lxml', parse_only=fics_filter)
@@ -306,6 +310,7 @@ for a in range(0, len(code_data)):
             print('index 에러 = ', a)
         gc.collect()
         #불필요한 데이터 전부 삭제
+        
 code_data = None
 wb2 = xw.Book('G:\RESULT.xlsx')
 # 결과 기록 엑셀 파일 불러오기
@@ -319,6 +324,7 @@ for z in range(0, len(buy_zoo)):
     wb2.sheets[0].range('G' + str(z + 3)).value = buy_zoo_high_price[z]
 
 # wb2.save('G:\RESULT.xlsx')
+"""
 hms(time.time() - start)
 # 엑셀 파일 저장, 경로까지 적으면 원하는 위치 저장 가능. 디폴트 경로는 파이썬 코드가 있는 곳
 # G:\Hyuk_Rim.xlsx
