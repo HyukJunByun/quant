@@ -5,6 +5,7 @@ import xlwings as xw
 import time
 import gc
 import math
+import numpy as np
 
 bbb_web_data = pd.read_html('https://www.kisrating.com/ratingsStatistics/statics_spread.do', match='국고채', header=0, index_col=0)[0]
 # 회사채 수익률 웹페이지 가져오기
@@ -91,14 +92,15 @@ for a in range(0, 1):
                     ifrs_table = None
                     DQ.columns = column
                     BQ.columns = column
-                    DA = DA.apply(pd.to_numeric, errors = 'coerce')
-                    DQ[column] = DQ[column].apply(pd.to_numeric, errors = 'ignore')
-                    BQ[column] = BQ[column].apply(pd.to_numeric, errors = 'ignore')
+                    for i in column:
+                        DQ[column] = DQ[column].apply(pd.to_numeric, errors = 'ignore')
+                        DQ[column] = DQ[column].apply(pd.to_numeric, errors = 'ignore')
+                        BQ[column] = BQ[column].apply(pd.to_numeric, errors = 'ignore')
                     price_and_num = pd.read_html(fnguide_url, match='시세현황', flavor='lxml', index_col=0, attrs={'class': 'us_table_ty1 table-hb thbg_g h_fix zigbg_no'})[0]
                     # 시세현황 표
                     my_zoo_table = pd.read_html(fnguide_url, match='주주현황', flavor='lxml', header=0, index_col=0, attrs={'class': 'us_table_ty1 h_fix zigbg_no notres'})
                     # 주주구분현황 표
-                    siga = pd.to_numeric(price_and_num[1]['시가총액(보통주,억원)'], errors = 'ignore').item()
+                    siga = pd.to_numeric(price_and_num[1]['시가총액(보통주,억원)'], errors = 'ignore')
                     # 시가총액
                     print(DA)
                     pbr = siga / DA[4]['지배주주지분']
@@ -211,8 +213,8 @@ for a in range(0, 1):
                                     for t in range(0, 8):
                                         # 개별-분기 데이터 엑셀에 넣기(자본금)
                                         wb_data.range(chr(t + 66) + str(76)).value = BQ[t][table_content[11]]
-                                    if wb_result.range('C26').value >= wb_result.range('C23').value:
-                                        # 매수가격 >= 현재가격
+                                    if wb_result.range('C26').value <= wb_result.range('C23').value:
+                                        # 매수가격 >= 현재가격, 일단 테스트용으로 바꿈
                                         if wb_result.range('F27').value != '역배열':
                                             # roe > 요구수익률
                                             one_m = profit_lily[0]
