@@ -31,6 +31,11 @@ def hms(s):
     print('소요시간 = ', hours, '시간 ', mu, '분 ', ss, '초')
 
 
+def numy(y):
+    y = pd.to_numeric(y, errors = 'ignore')
+    return y
+
+
 buy_zoo = []
 # 매수할 주식 목록
 buy_zoo_price = []
@@ -88,11 +93,15 @@ for a in range(0, 1):
                     DQ = ifrs_table[2]
                     BQ = ifrs_table[5]
                     ifrs_table = None
+                    DA = numy(DA)
+                    DQ = numy(DQ)
+                    BQ = numy(BQ)
                     DQ.columns = [0, 1, 2, 3, 4, 5, 6, 7]
                     BQ.columns = [0, 1, 2, 3, 4, 5, 6, 7]
-                    price_and_num = pd.read_html(fnguide_url, match='시세현황', flavor='lxml', index_col=0, attrs={'class': 'us_table_ty1 table-hb thbg_g h_fix zigbg_no'})
+                    price_and_num = pd.read_html(fnguide_url, match='시세현황', flavor='lxml', index_col=0, attrs={'class': 'us_table_ty1 table-hb thbg_g h_fix zigbg_no'})[0]
                     # 시세현황 표
-                    my_zoo_table = pd.read_html(fnguide_url, match='주주구분 현황', flavor='lxml', header=0, index_col=0, attrs={'class': 'us_table_ty1 h_fix zigbg_no notres'})
+                    price_and_num = numy(price_and_num)
+                    my_zoo_table = pd.read_html(fnguide_url, match='주주현황', flavor='lxml', header=0, index_col=0, attrs={'class': 'us_table_ty1 h_fix zigbg_no notres'})
                     # 주주구분현황 표
                     siga = price_and_num[1]['시가총액(보통주,억원)']
                     # 시가총액
@@ -109,41 +118,39 @@ for a in range(0, 1):
                         # 1/3/6/12개월 수익률
                         all_zoo = price_and_num[1]['발행주식수(보통주/ 우선주)']
                         # 발행주식수
-                        my_zoo = my_zoo_table['보통주']['자기주식 (자사주+자사주신탁)']
+                        my_zoo = numy(my_zoo_table['보통주']['자기주식 (자사주+자사주신탁)'])
                         # 자기주식수
                         my_zoo_table = None
                         price_and_num = None
                         fnguide_url = 'http://comp.fnguide.com/SVO2/ASP/SVD_Finance.asp?pGB=1&gicode=A005930&cID=&MenuYn=Y&ReportGB=&NewMenuID=103&stkGb=701'
                         # fnguide_url = 'http://comp.fnguide.com/SVO2/ASP/SVD_Finance.asp?pGB=1&gicode=A' + code_num + '&cID=&MenuYn=Y&ReportGB=&NewMenuID=103&stkGb=701'
                         # 재무제표
+                        recent_DA = DA.iloc[0, 4] # 최신 사업보고서 (연도/12월) str
                         earn = pd.read_html(fnguide_url, match='포괄손익계산서', flavor='lxml', header=0, index_col=0, attrs={'class': 'us_table_ty1 h_fix zigbg_no'})[0]
-                        earn.columns = [0, 1, 2, 3, 4, 5]
-                        earn_all = earn[3]['매출총이익']
+                        earn_all = numy(earn[recent_DA]['매출총이익'])
                         # 매출총이익
+                        earn = None
                         gpa = earn_all / DA[4]['자산총계']
                         # GP/A
                         cash_flow_table = pd.read_html(fnguide_url, match='현금흐름표', flavor='lxml', header=0, index_col=0, attrs={'class': 'us_table_ty1 h_fix zigbg_no'})[0]
-                        cash_flow_table.columns = [0, 1, 2, 3]
-                        cash_flow = cash_flow_table[3]['영업활동으로인한현금흐름']
+                        cash_flow = numy(cash_flow_table[recent_DA]['영업활동으로인한현금흐름'])
                         # 영업현금흐름
                         pcr = siga / cash_flow
                         # PCR
                         naver = DA[4]['영업이익(발표기준)']
                         # 영업이익
-                        kakao = earn[3]['당기순이익']
+                        kakao = DA[4]['당기순이익']
                         # 당기순이익(지배+비지배)
-                        apple = cash_flow_table[3]['유상증자']
+                        apple = numy(cash_flow_table[recent_DA]['유상증자'])
                         # 유상증자
                         cash_flow_table = None
-                        earn = None
                         if(pcr > 1 and  naver > 0 and cash_flow > 0 and kakao > 0 and math.isnan(apple) == True):
                             # pcr, 신f-score(영업이익, 영업현금흐름, 유상증자), 당기순이익 필터링
                             fnguide_url = 'http://comp.fnguide.com/SVO2/ASP/SVD_FinanceRatio.asp?pGB=1&gicode=A005930&cID=&MenuYn=Y&ReportGB=&NewMenuID=104&stkGb=701'
                             # fnguide_url = 'http://comp.fnguide.com/SVO2/ASP/SVD_FinanceRatio.asp?pGB=1&gicode=A' + code_num + '&cID=&MenuYn=Y&ReportGB=&NewMenuID=104&stkGb=701'
                             # 재무비율
                             mon_ratio = pd.read_html(fnguide_url, match='재무비율', flavor='lxml', header=0, index_col=0, attrs={'class': 'us_table_ty1 h_fix zigbg_no'})[0]
-                            mon_ratio.columns = [0, 1, 2, 3, 4]
-                            owe = mon_ratio[4]['순차입금비율계산에 참여한 계정 펼치기']
+                            owe = numy(mon_ratio[recent_DA]['순차입금비율계산에 참여한 계정 펼치기'])
                             # 순차입금비율
                             mon_ratio = None
                             if(math.isnan(owe) == True or owe < 200):
@@ -151,15 +158,14 @@ for a in range(0, 1):
                                 fnguide_url = 'http://comp.fnguide.com/SVO2/ASP/SVD_Invest.asp?pGB=1&gicode=A005930&cID=&MenuYn=Y&ReportGB=&NewMenuID=105&stkGb=701'
                                 # fnguide_url = 'http://comp.fnguide.com/SVO2/ASP/SVD_Invest.asp?pGB=1&gicode=A' + code_num + '&cID=&MenuYn=Y&ReportGB=&NewMenuID=105&stkGb=701'
                                 # 투자지표
-                                mon_ratio = pd.read_html(fnguide_url, match='기업가치 지표', flavor='lxml', header=0, index_col=0, attrs={'class': 'us_table_ty1 h_fix zigbg_no'})[0]
-                                mon_ratio.columns = [0, 1, 2, 3, 4]
-                                bay_trend = mon_ratio[4]['배당성향(현금)(%)계산에 참여한 계정 펼치기']
+                                invest_idea = pd.read_html(fnguide_url, match='기업가치 지표', flavor='lxml', header=0, index_col=0, attrs={'class': 'us_table_ty1 h_fix zigbg_no'})[0]
+                                bay_trend = numy(invest_idea[recent_DA]['배당성향(현금)(%)계산에 참여한 계정 펼치기'])
                                 # 배당성향
-                                ev_ebita = mon_ratio[4]['EV/EBITDA계산에 참여한 계정 펼치기']
+                                ev_ebita = numy(invest_idea[recent_DA]['EV/EBITDA계산에 참여한 계정 펼치기'])
                                 # EV/EBITA
-                                fcff = mon_ratio[4]['FCFF']
+                                fcff = numy(invest_idea[recent_DA]['FCFF'])
                                 pfcr = siga / fcff
-                                mon_ratio = None
+                                invest_idea = None
                                 # PFCR
                                 if(pfcr > 1):
                                     profit_lily = [float(i) for i in str(profit).split('/')] 
