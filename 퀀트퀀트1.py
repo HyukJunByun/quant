@@ -93,17 +93,16 @@ for a in range(0, 1):
                     DQ.columns = column
                     BQ.columns = column
                     for i in column:
-                        DQ[column] = DQ[column].apply(pd.to_numeric, errors = 'ignore')
-                        DQ[column] = DQ[column].apply(pd.to_numeric, errors = 'ignore')
-                        BQ[column] = BQ[column].apply(pd.to_numeric, errors = 'ignore')
+                        DA[i] = DA[i].apply(pd.to_numeric, errors = 'coerce')
+                        DQ[i] = DQ[i].apply(pd.to_numeric, errors = 'ignore')
+                        BQ[i] = BQ[i].apply(pd.to_numeric, errors = 'ignore')
                     price_and_num = pd.read_html(fnguide_url, match='시세현황', flavor='lxml', index_col=0, attrs={'class': 'us_table_ty1 table-hb thbg_g h_fix zigbg_no'})[0]
                     # 시세현황 표
                     my_zoo_table = pd.read_html(fnguide_url, match='주주현황', flavor='lxml', header=0, index_col=0, attrs={'class': 'us_table_ty1 h_fix zigbg_no notres'})
                     # 주주구분현황 표
-                    siga = pd.to_numeric(price_and_num[1]['시가총액(보통주,억원)'], errors = 'ignore')
+                    siga = pd.to_numeric(price_and_num[1]['시가총액(보통주,억원)'], errors = 'coerce')
                     # 시가총액
-                    print(DA)
-                    pbr = siga / DA[4]['지배주주지분']
+                    pbr = np.true_divide(siga, DA[4]['지배주주지분'])
                     boon_per = siga / (DQ[4]['지배주주순이익'] * 4)
                     psr = siga / DA[4]['매출액']
                     por = siga / DA[4]['영업이익(발표기준)']
