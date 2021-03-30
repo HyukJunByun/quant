@@ -62,11 +62,11 @@ code_data = code_data['종목코드']
 # ['종목코드'] 요것만 하면 판다스에 종목코드가 데이터프레임으로 저장될까? ㅇㅇ 가능하네
 code_data = code_data.apply(make_code)
 column = [0, 1, 2, 3, 4, 5, 6, 7]
+np.seterr(divide='raise')
 
 # len(code_data)
-for a in range(0, 1):
-    # code_num = code_data[a]
-    code_num = '005930' # 테스트용 삼성전자
+for a in range(0, 100):
+    code_num = code_data[a]
     if(code_num[0] != '9'):
         # 국내상장 해외기업 제외
         fnguide_url = "http://comp.fnguide.com/SVO2/ASP/SVD_Main.asp?pGB=1&gicode=A" + code_num + "&cID=&MenuYn=Y&ReportGB=D&NewMenuID=Y&stkGb=701"
@@ -98,11 +98,11 @@ for a in range(0, 1):
                         BQ[i] = BQ[i].apply(pd.to_numeric, errors = 'ignore')
                     price_and_num = pd.read_html(fnguide_url, match='시세현황', flavor='lxml', index_col=0, attrs={'class': 'us_table_ty1 table-hb thbg_g h_fix zigbg_no'})[0]
                     # 시세현황 표
-                    my_zoo_table = pd.read_html(fnguide_url, match='주주현황', flavor='lxml', header=0, index_col=0, attrs={'class': 'us_table_ty1 h_fix zigbg_no notres'})
+                    my_zoo_table = pd.read_html(fnguide_url, match='주주현황', flavor='lxml', header=0, index_col=0, attrs={'class': 'us_table_ty1 h_fix zigbg_no notres'})[1]
                     # 주주구분현황 표
                     siga = pd.to_numeric(price_and_num[1]['시가총액(보통주,억원)'], errors = 'coerce')
                     # 시가총액
-                    pbr = np.true_divide(siga, DA[4]['지배주주지분'])
+                    pbr = siga / DA[4]['지배주주지분']
                     boon_per = siga / (DQ[4]['지배주주순이익'] * 4)
                     psr = siga / DA[4]['매출액']
                     por = siga / DA[4]['영업이익(발표기준)']
@@ -115,7 +115,7 @@ for a in range(0, 1):
                         # 1/3/6/12개월 수익률
                         all_zoo = pd.to_numeric(price_and_num[1]['발행주식수(보통주/ 우선주)'], errors = 'ignore')
                         # 발행주식수
-                        my_zoo = pd.to_numeric(my_zoo_table.loc['자기주식 (자사주+자사주신탁)', '보통주'], errors = 'ignore')
+                        my_zoo = pd.to_numeric(my_zoo_table.loc['자기주식 (자사주+자사주신탁)', '보통주'], errors = 'ignore')
                         # 자기주식수
                         my_zoo_table = None
                         price_and_num = None
@@ -137,10 +137,11 @@ for a in range(0, 1):
                         # 영업이익
                         kakao = DA[4]['당기순이익']
                         # 당기순이익(지배+비지배)
-                        apple = pd.to_numeric(cash_flow_table.loc['유상증자', recent_DA], errors = 'ignore')
+                        # apple = pd.to_numeric(cash_flow_table.loc['유상증자', recent_DA], errors = 'ignore')
+                        # math.isnan(apple) == True
                         # 유상증자
                         cash_flow_table = None
-                        if(pcr > 1 and  naver > 0 and cash_flow > 0 and kakao > 0 and math.isnan(apple) == True):
+                        if(pcr > 1 and  naver > 0 and cash_flow > 0 and kakao > 0):
                             # pcr, 신f-score(영업이익, 영업현금흐름, 유상증자), 당기순이익 필터링
                             fnguide_url = 'http://comp.fnguide.com/SVO2/ASP/SVD_FinanceRatio.asp?pGB=1&gicode=A' + code_num + '&cID=&MenuYn=Y&ReportGB=&NewMenuID=104&stkGb=701'
                             # 재무비율
@@ -183,7 +184,7 @@ for a in range(0, 1):
                                         wb_data.range(chr(cell_col) + '68').value = BQ.iloc[0, i]
                                         # 날짜 데이터
                                         cell_col += 1
-                                    table_content = ('매출액', '영업이익', '영업이익(발표기준)', '당기순이익', '지배주주순이익', '비지배주주순이익', '자산총계', '부채총계', '자본총계', '지배주주지분', '비지배주주지분', '자본금', 'ROA', 'ROE')
+                                    table_content = ('매출액', '영업이익', '영업이익(발표기준)', '당기순이익', '지배주주순이익', '비지배주주순이익', '자산총계', '부채총계', '자본총계', '지배주주지분', '비지배주주지분', '자본금', 'ROA', 'ROE')
                                     k = 0
                                     for i in range(0, 14):
                                         # 연결-연간 데이터 엑셀에 넣기
@@ -207,13 +208,13 @@ for a in range(0, 1):
                                         # 개별-분기 데이터 엑셀에 넣기(자산총계~자본총계)
                                         cell_col = 66
                                         for t in range(0, 8):
-                                            wb_data.range(chr(cell_col) + str(i + 73)).value = BQ[t][table_content[i]]
+                                            wb_data.range(chr(cell_col) + str(i + 73)).value = BQ[t][table_content[i + 6]]
                                             cell_col += 1    
                                     for t in range(0, 8):
                                         # 개별-분기 데이터 엑셀에 넣기(자본금)
                                         wb_data.range(chr(t + 66) + str(76)).value = BQ[t][table_content[11]]
-                                    if wb_result.range('C26').value <= wb_result.range('C23').value:
-                                        # 매수가격 >= 현재가격, 일단 테스트용으로 바꿈
+                                    if wb_result.range('C26').value >= wb_result.range('C23').value:
+                                        # 매수가격 >= 현재가격
                                         if wb_result.range('F27').value != '역배열':
                                             # roe > 요구수익률
                                             one_m = profit_lily[0]
@@ -240,13 +241,18 @@ for a in range(0, 1):
                                             profit_list.append(profit_lily)
                                             bay_trend_list.append(bay_trend)
                                             asset_growth_list.append(asset_growth)
-                                            print(a, '  /  ', len(code_data))
+                                            DA = None
+                                            DQ = None
+                                            BQ = None
             except AttributeError:
-                print('에러 = ', a)
+                 print('에러 = ', a)
             except IndexError:
                 print('index 에러 = ', a)
-        gc.collect()
-        #불필요한 데이터 전부 삭제
+            except FloatingPointError:
+                print('분모가 0인 에러 = ', a)
+    print(a, '  /  ', len(code_data))
+    gc.collect()
+    # 불필요한 데이터 전부 삭제
         
 code_data = None
 wb2 = xw.Book('G:\RESULT.xlsx')
