@@ -68,11 +68,11 @@ code_data = code_data.apply(make_code)
 
 # len(code_data)
 for a in range(0, 1):
-    code_num = code_data[a]
+    # code_num = code_data[a]
+    code_num = '005930' # 테스트용 삼성전자
     if(code_num[0] != '9'):
-        #국내상장 해외기업 제외
-        fnguide_url ='http://comp.fnguide.com/SVO2/ASP/SVD_Main.asp?pGB=1&gicode=A005930&cID=&MenuYn=Y&ReportGB=&NewMenuID=101&stkGb=701'
-        #fnguide_url = "http://comp.fnguide.com/SVO2/ASP/SVD_Main.asp?pGB=1&gicode=A" + code_num + "&cID=&MenuYn=Y&ReportGB=D&NewMenuID=Y&stkGb=701"
+        # 국내상장 해외기업 제외
+        fnguide_url = "http://comp.fnguide.com/SVO2/ASP/SVD_Main.asp?pGB=1&gicode=A" + code_num + "&cID=&MenuYn=Y&ReportGB=D&NewMenuID=Y&stkGb=701"
         # 종목코드 표에 있는 모든 법인 접속
         webpage = requests.get(fnguide_url)
         fics_data = BeautifulSoup(webpage.content, 'lxml', parse_only=SoupStrainer('span', {'class' : "stxt stxt2"}))
@@ -122,8 +122,7 @@ for a in range(0, 1):
                         # 자기주식수
                         my_zoo_table = None
                         price_and_num = None
-                        fnguide_url = 'http://comp.fnguide.com/SVO2/ASP/SVD_Finance.asp?pGB=1&gicode=A005930&cID=&MenuYn=Y&ReportGB=&NewMenuID=103&stkGb=701'
-                        # fnguide_url = 'http://comp.fnguide.com/SVO2/ASP/SVD_Finance.asp?pGB=1&gicode=A' + code_num + '&cID=&MenuYn=Y&ReportGB=&NewMenuID=103&stkGb=701'
+                        fnguide_url = 'http://comp.fnguide.com/SVO2/ASP/SVD_Finance.asp?pGB=1&gicode=A' + code_num + '&cID=&MenuYn=Y&ReportGB=&NewMenuID=103&stkGb=701'
                         # 재무제표
                         recent_DA = DA.iloc[0, 4] # 최신 사업보고서 (연도/12월) str
                         earn = pd.read_html(fnguide_url, match='포괄손익계산서', flavor='lxml', header=0, index_col=0, attrs={'class': 'us_table_ty1 h_fix zigbg_no'})[0]
@@ -146,8 +145,7 @@ for a in range(0, 1):
                         cash_flow_table = None
                         if(pcr > 1 and  naver > 0 and cash_flow > 0 and kakao > 0 and math.isnan(apple) == True):
                             # pcr, 신f-score(영업이익, 영업현금흐름, 유상증자), 당기순이익 필터링
-                            fnguide_url = 'http://comp.fnguide.com/SVO2/ASP/SVD_FinanceRatio.asp?pGB=1&gicode=A005930&cID=&MenuYn=Y&ReportGB=&NewMenuID=104&stkGb=701'
-                            # fnguide_url = 'http://comp.fnguide.com/SVO2/ASP/SVD_FinanceRatio.asp?pGB=1&gicode=A' + code_num + '&cID=&MenuYn=Y&ReportGB=&NewMenuID=104&stkGb=701'
+                            fnguide_url = 'http://comp.fnguide.com/SVO2/ASP/SVD_FinanceRatio.asp?pGB=1&gicode=A' + code_num + '&cID=&MenuYn=Y&ReportGB=&NewMenuID=104&stkGb=701'
                             # 재무비율
                             mon_ratio = pd.read_html(fnguide_url, match='재무비율', flavor='lxml', header=0, index_col=0, attrs={'class': 'us_table_ty1 h_fix zigbg_no'})[0]
                             owe = numy(mon_ratio[recent_DA]['순차입금비율계산에 참여한 계정 펼치기'])
@@ -155,8 +153,7 @@ for a in range(0, 1):
                             mon_ratio = None
                             if(math.isnan(owe) == True or owe < 200):
                                 # 순차입금비율 < 200%
-                                fnguide_url = 'http://comp.fnguide.com/SVO2/ASP/SVD_Invest.asp?pGB=1&gicode=A005930&cID=&MenuYn=Y&ReportGB=&NewMenuID=105&stkGb=701'
-                                # fnguide_url = 'http://comp.fnguide.com/SVO2/ASP/SVD_Invest.asp?pGB=1&gicode=A' + code_num + '&cID=&MenuYn=Y&ReportGB=&NewMenuID=105&stkGb=701'
+                                fnguide_url = 'http://comp.fnguide.com/SVO2/ASP/SVD_Invest.asp?pGB=1&gicode=A' + code_num + '&cID=&MenuYn=Y&ReportGB=&NewMenuID=105&stkGb=701'
                                 # 투자지표
                                 invest_idea = pd.read_html(fnguide_url, match='기업가치 지표', flavor='lxml', header=0, index_col=0, attrs={'class': 'us_table_ty1 h_fix zigbg_no'})[0]
                                 bay_trend = numy(invest_idea[recent_DA]['배당성향(현금)(%)계산에 참여한 계정 펼치기'])
