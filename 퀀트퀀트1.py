@@ -67,6 +67,7 @@ np.seterr(divide='raise')
 # len(code_data)
 for a in range(0, len(code_data)):
     code_num = code_data[a]
+    # print(code_name[a])
     if(code_num[0] != '9'):
         # 국내상장 해외기업 제외
         fnguide_url = "http://comp.fnguide.com/SVO2/ASP/SVD_Main.asp?pGB=1&gicode=A" + code_num + "&cID=&MenuYn=Y&ReportGB=D&NewMenuID=Y&stkGb=701"
@@ -85,7 +86,7 @@ for a in range(0, len(code_data)):
                 # 연결-전체, 연결-연간, 연결-분기, 개별-전체 순...
                 # 열 인덱스=(연간 = Annual, Annual.1~, 분기 = Net Quarter, Net Quarter.1~)
                 DA = ifrs_table[1]
-                if(len(DA.columns) == 8 and list(DA.index.values)[1] == '매출액'): # 금융주 및 정보부족 회사 필터링
+                if(len(DA.columns) == 8 and list(DA.index.values)[1] == '매출액'):  # 금융주 및 정보부족 회사 필터링
                     DA.columns = column
                     DQ = ifrs_table[2]
                     BQ = ifrs_table[5]
@@ -248,10 +249,8 @@ for a in range(0, len(code_data)):
                                                 DA = None
                                                 DQ = None
                                                 BQ = None
-            except AttributeError:
-                 print('에러 = ', a)
-            except IndexError:
-                print('index 에러 = ', a)
+            except ValueError as v:
+                print(a, '->', v)
             except FloatingPointError:
                 print('분모가 0인 에러 = ', a)
     print(a + 1, '  /  ', len(code_data))
