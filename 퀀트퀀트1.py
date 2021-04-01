@@ -52,9 +52,9 @@ ev_ebita_list = []
 pcr_list = []
 pfcr_list = []
 gpa_list = []
-profit_list = [] # 3/6/12개월 수익률
+profit_list = [] # 영업이익 & 당기순이익 YOY, QOQ
 bay_trend_list = [] # 배당성향
-asset_growth_list  = [] # 자산증가율(최근 분기)
+asset_growth_list  = [] # 자산증가율(최근 연도)
 
 
 code_name = code_data['회사명']
@@ -104,19 +104,19 @@ for a in range(0, len(code_data)):
                         # 시세현황 표
                         my_zoo_table = pd.read_html(fnguide_url, match='주주현황', flavor='lxml', header=0, index_col=0, attrs={'class': 'us_table_ty1 h_fix zigbg_no notres'})[1]
                         # 주주구분현황 표
-                        siga = pd.to_numeric(price_and_num[1]['시가총액(보통주,억원)'], errors = 'coerce')
+                        siga = pd.to_numeric(price_and_num[1]['시가총액(보통주,억원)'], errors = 'ignore')
                         # 시가총액
-                        pbr = siga / DA[4]['지배주주지분']
+                        pbr = siga / DQ[4]['지배주주지분']
                         boon_per = siga / (DQ[4]['지배주주순이익'] * 4)
-                        psr = siga / DA[4]['매출액']
-                        por = siga / DA[4]['영업이익(발표기준)']
-                        # 각종 가치지표(with 현재 시총 & 최근 연말 실적)
-                        if(pbr > 0.2 and boon_per > 2 and psr > 0.1 and por > 2):
+                        psr = siga / (DQ[4]['매출액'] + DQ[3]['매출액'] + DQ[2]['매출액'] + DQ[1]['매출액'])
+                        por = siga / (DQ[4]['영업이익(발표기준)'] + DQ[3]['영업이익(발표기준)'] + DQ[2]['영업이익(발표기준)'] + DQ[1]['영업이익(발표기준)'])
+                        # 각종 가치지표(with 현재 시총 & 최근 4개분기 실적)
+                        asset_growth = 100 * (DA[4]['자산총계'] - DA[3]['자산총계']) / DA[3]['자산총계']
+                        # 자산증가율(1년)
+                        if(pbr > 0.2 and boon_per > 2 and psr > 0.1 and por > 2 and asset_growth > 0):
                             # 1차 가치지표 필터링
                             price = pd.to_numeric(price_and_num[1]['종가/ 전일대비'], errors = 'ignore')
                             # 주식가격
-                            profit = pd.to_numeric(price_and_num[1]['수익률(1M/ 3M/ 6M/ 1Y)'], errors = 'ignore')
-                            # 1/3/6/12개월 수익률
                             all_zoo = pd.to_numeric(price_and_num[1]['발행주식수(보통주/ 우선주)'], errors = 'ignore')
                             # 발행주식수
                             my_zoo = pd.to_numeric(my_zoo_table.loc['자기주식 (자사주+자사주신탁)', '보통주'], errors = 'ignore')
@@ -125,25 +125,32 @@ for a in range(0, len(code_data)):
                             price_and_num = None
                             fnguide_url = 'http://comp.fnguide.com/SVO2/ASP/SVD_Finance.asp?pGB=1&gicode=A' + code_num + '&cID=&MenuYn=Y&ReportGB=&NewMenuID=103&stkGb=701'
                             # 재무제표
-                            recent_DA = DA.iloc[0, 4] # 최신 사업보고서 (연도/12월) str
-                            earn = pd.read_html(fnguide_url, match='포괄손익계산서', flavor='lxml', header=0, index_col=0, attrs={'class': 'us_table_ty1 h_fix zigbg_no'})[0]
-                            earn_all = pd.to_numeric(earn.loc['매출총이익', recent_DA], errors = 'ignore')
+                            recent_DA = DA.iloc[0, 4]  # 최신 사업보고서 (연도/12월) str
+                            recent_DQ = DQ.iloc[0, 4]
+                            rrecent_DQ = DQ.iloc[0, 3]
+                            rrrecent_DQ = DQ.iloc[0, 2]
+                            rrrrecent_DQ = DQ.iloc[0, 1]  # 최근 4개분기 연도/월
+                            earn = pd.read_html(fnguide_url, match='포괄손익계산서', flavor='lxml', header=0, index_col=0, attrs={'class': 'us_table_ty1 h_fix zigbg_no'})[1]
+                            earn_all = (pd.to_numeric(earn.loc['매출총이익', recent_DQ], errors = 'ignore') +
+                                        pd.to_numeric(earn.loc['매출총이익', rrecent_DQ], errors = 'ignore') +
+                                        pd.to_numeric(earn.loc['매출총이익', rrrecent_DQ], errors = 'ignore') +
+                                        pd.to_numeric(earn.loc['매출총이익', rrrrecent_DQ], errors = 'ignore'))
                             # 매출총이익
                             earn = None
-                            gpa = earn_all / DA[4]['자산총계']
+                            gpa = earn_all / DQ[4]['자산총계']
                             # GP/A
-                            cash_flow_table = pd.read_html(fnguide_url, match='현금흐름표', flavor='lxml', header=0, index_col=0, attrs={'class': 'us_table_ty1 h_fix zigbg_no'})[0]
-                            cash_flow = pd.to_numeric(cash_flow_table.loc['영업활동으로인한현금흐름', recent_DA], errors = 'ignore')
+                            cash_flow_table = pd.read_html(fnguide_url, match='현금흐름표', flavor='lxml', header=0, index_col=0, attrs={'class': 'us_table_ty1 h_fix zigbg_no'})[1]
+                            cash_flow = (pd.to_numeric(cash_flow_table.loc['영업활동으로인한현금흐름', recent_DQ], errors = 'ignore') +
+                                         pd.to_numeric(cash_flow_table.loc['영업활동으로인한현금흐름', rrecent_DQ], errors = 'ignore') +
+                                         pd.to_numeric(cash_flow_table.loc['영업활동으로인한현금흐름', rrrecent_DQ], errors = 'ignore') +
+                                         pd.to_numeric(cash_flow_table.loc['영업활동으로인한현금흐름', rrrrecent_DQ], errors = 'ignore'))
                             # 영업현금흐름
                             pcr = siga / cash_flow
                             # PCR
-                            naver = DA[4]['영업이익(발표기준)']
+                            naver = (DQ[4]['영업이익(발표기준)'] + DQ[3]['영업이익(발표기준)'] + DQ[2]['영업이익(발표기준)'] + DQ[1]['영업이익(발표기준)'])
                             # 영업이익
-                            kakao = DA[4]['당기순이익']
-                            # 당기순이익(지배+비지배)
-                            # apple = pd.to_numeric(cash_flow_table.loc['유상증자', recent_DA], errors = 'ignore')
-                            # math.isnan(apple) == True
-                            # 유상증자
+                            kakao = (DQ[4]['지배주주순이익'] + DQ[3]['지배주주순이익'] + DQ[2]['지배주주순이익'] + DQ[1]['지배주주순이익'])
+                            # 당기순이익(지배)
                             cash_flow_table = None
                             if(pcr > 1 and  naver > 0 and cash_flow > 0 and kakao > 0):
                                 # pcr, 신f-score(영업이익, 영업현금흐름, 유상증자), 당기순이익 필터링
@@ -167,8 +174,7 @@ for a in range(0, len(code_data)):
                                     invest_idea = None
                                     # PFCR
                                     if(pfcr > 1):
-                                        profit_lily = [float(i) for i in str(profit).split('/')]
-                                        wb = xw.Book('G:\Hyuk_Rim_v7.xlsx')                                          # 엑셀 이름 업데이트!!
+                                        wb = xw.Book('G:\Hyuk_Rim_v7.xlsx')                                         # 엑셀 이름 업데이트!!
                                         wb_result = wb.sheets['Result']
                                         wb_data = wb.sheets['Data']
                                         wb_result.range('D11').value = bbb_data
@@ -222,13 +228,6 @@ for a in range(0, len(code_data)):
                                             # 매수가격 >= 현재가격
                                             if wb_result.range('F27').value != '역배열':
                                                 # roe > 요구수익률
-                                                one_m = profit_lily[0]
-                                                profit_lily.remove(profit_lily[0])
-                                                for i in range(0, 3):
-                                                    profit_lily[i] = profit_lily[i] - one_m
-                                                # (3/6/12 - 1개월) 수익률만 저장
-                                                asset_growth = 100 * (DQ[4]['자산총계'] - DQ[3]['자산총계']) / DQ[3]['자산총계']
-                                                # 자산증가율(최근 분기)
                                                 buy_zoo_code.append(code_num)
                                                 buy_zoo.append(code_name[a])
                                                 buy_zoo_price.append(wb_result.range('D24').value)
@@ -243,9 +242,12 @@ for a in range(0, len(code_data)):
                                                 pcr_list.append(pcr)
                                                 pfcr_list.append(pfcr)
                                                 gpa_list.append(gpa)
-                                                profit_list.append(profit_lily)
                                                 bay_trend_list.append(bay_trend)
                                                 asset_growth_list.append(asset_growth)
+                                                for i in ['영업이익(발표기준)', '지배주주순이익']:
+                                                    # 영업이익 & 당기순이익(지배) YOY QOQ '역수' -> 낮을수록 좋음
+                                                    profit_list.append(DA[3][i] / ((DA[4][i] - DA[3][i]) * 100))
+                                                    profit_list.append(DQ[3][i] / ((DQ[4][i] - DQ[3][i]) * 100))
                                                 DA = None
                                                 DQ = None
                                                 BQ = None
@@ -281,6 +283,7 @@ for z in range(0, len(buy_zoo)):
     wb2.sheets[3].range('D' + str(z + 6)).value = profit_list[z][0]
     wb2.sheets[3].range('E' + str(z + 6)).value = profit_list[z][1]
     wb2.sheets[3].range('F' + str(z + 6)).value = profit_list[z][2]
+    wb2.sheets[3].range('G' + str(z + 6)).value = profit_list[z][3]
 # wb2.save('G:\RESULT.xlsx')
 hms(time.time() - start)
 # 엑셀 파일 저장, 경로까지 적으면 원하는 위치 저장 가능. 디폴트 경로는 파이썬 코드가 있는 곳
