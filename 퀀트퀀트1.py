@@ -244,10 +244,12 @@ for a in range(0, len(code_data)):
                                                 gpa_list.append(gpa)
                                                 bay_trend_list.append(bay_trend)
                                                 asset_growth_list.append(asset_growth)
+                                                profit_lily = []
                                                 for i in ['영업이익(발표기준)', '지배주주순이익']:
                                                     # 영업이익 & 당기순이익(지배) YOY QOQ '역수' -> 낮을수록 좋음
-                                                    profit_list.append(DA[3][i] / ((DA[4][i] - DA[3][i]) * 100))
-                                                    profit_list.append(DQ[3][i] / ((DQ[4][i] - DQ[3][i]) * 100))
+                                                    profit_lily.append(DA[3][i] / ((DA[4][i] - DA[3][i]) * 100))
+                                                    profit_lily.append(DQ[3][i] / ((DQ[4][i] - DQ[3][i]) * 100))
+                                                profit_list.append(profit_lily)
                                                 DA = None
                                                 DQ = None
                                                 BQ = None
