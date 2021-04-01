@@ -265,7 +265,7 @@ wb2 = xw.Book('G:\RESULT.xlsx')
 for z in range(0, len(buy_zoo)):
     # b열에 매수할 종목들 하나씩 기록
     wb2.sheets[0].range('C' + str(z + 3)).value = buy_zoo_code[z]
-    wb2.sheets[0].range('D' + str(z + 3)).value = buy_zoo[z]
+    wb2.sheets[1].range('C' + str(z + 6)).value = buy_zoo[z]
     wb2.sheets[0].range('E' + str(z + 3)).value = buy_zoo_price[z]
     wb2.sheets[0].range('F' + str(z + 3)).value = buy_zoo_low_price[z]
     wb2.sheets[0].range('G' + str(z + 3)).value = buy_zoo_good_price[z]
