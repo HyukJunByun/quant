@@ -52,9 +52,9 @@ ev_ebita_list = []
 pcr_list = []
 pfcr_list = []
 gpa_list = []
-profit_list = [] # 영업이익 & 당기순이익 YOY, QOQ
-bay_trend_list = [] # 배당성향
-asset_growth_list  = [] # 자산증가율(최근 연도)
+profit_list = []  # 영업이익 & 당기순이익 YOY, QOQ
+bay_trend_list = []  # 배당성향
+asset_growth_list = []  # 자산증가율(최근 연도)
 
 
 code_name = code_data['회사명']
@@ -67,6 +67,7 @@ np.seterr(divide='raise')
 # len(code_data)
 for a in range(0, len(code_data)):
     code_num = code_data[a]
+    # code_data[a]
     # print(code_name[a])
     if(code_num[0] != '9'):
         # 국내상장 해외기업 제외
@@ -228,6 +229,11 @@ for a in range(0, len(code_data)):
                                             # 매수가격 >= 현재가격
                                             if wb_result.range('F27').value != '역배열':
                                                 # roe > 요구수익률
+                                                profit_lily = []
+                                                for i in ['영업이익(발표기준)', '지배주주순이익']:
+                                                    # 영업이익 & 당기순이익(지배) YOY QOQ
+                                                    profit_lily.append(((DA[4][i] - DA[3][i]) * 100) / DA[3][i])
+                                                    profit_lily.append(((DQ[4][i] - DQ[3][i]) * 100) / DQ[3][i])
                                                 buy_zoo_code.append(code_num)
                                                 buy_zoo.append(code_name[a])
                                                 buy_zoo_price.append(wb_result.range('D24').value)
@@ -244,11 +250,6 @@ for a in range(0, len(code_data)):
                                                 gpa_list.append(gpa)
                                                 bay_trend_list.append(bay_trend)
                                                 asset_growth_list.append(asset_growth)
-                                                profit_lily = []
-                                                for i in ['영업이익(발표기준)', '지배주주순이익']:
-                                                    # 영업이익 & 당기순이익(지배) YOY QOQ '역수' -> 낮을수록 좋음
-                                                    profit_lily.append(DA[3][i] / ((DA[4][i] - DA[3][i]) * 100))
-                                                    profit_lily.append(DQ[3][i] / ((DQ[4][i] - DQ[3][i]) * 100))
                                                 profit_list.append(profit_lily)
                                                 DA = None
                                                 DQ = None
