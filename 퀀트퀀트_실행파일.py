@@ -31,23 +31,18 @@ class MyApp(QWidget):
         super().__init__()
         self.pbar = QProgressBar(self)
         self.btn = QPushButton('모든 종목 분석하기', self)
-        self.btn2 = QPushButton('종료', self)
         self.vbox = QVBoxLayout()
         self.setGeometry(300, 300, 400, 200)
         self.initUI()
-        self.threadpool = QThreadPool()
 
     def initUI(self):
         self.pbar.setAlignment(Qt.AlignCenter)
 
         self.vbox.addWidget(self.btn)
         self.vbox.addWidget(self.pbar)
-        self.vbox.addWidget(self.btn2)
 
         self.setLayout(self.vbox)
         self.setWindowTitle('혁주이 투자비법')
-        self.btn2.clicked.connect(self.close)
-        # self.setWindowIcon(QIcon('web.png'))
         self.btn.clicked.connect(self.run_script)
         self.show()
 
