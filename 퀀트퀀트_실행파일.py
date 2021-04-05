@@ -47,7 +47,6 @@ class MyApp(QWidget):
         self.show()
 
     def run_script(self):
-        # self.btn.setEnabled(False)
         self.btn.setText('분석 중')
         self.pbar.setValue(0)
         bbb_web_data = pd.read_html('https://www.kisrating.com/ratingsStatistics/statics_spread.do', match='국고채', header=0,  index_col=0)[0]
@@ -311,7 +310,10 @@ class MyApp(QWidget):
                     except ValueError as v:
                         print(a, '->', v)
                     except FloatingPointError:
-                        print('분모가 0인 에러 = ', a)
+                        print('분모가 0인 기업 필터링 = ', a)
+            if(a + 1 == len(code_data)):
+                self.btn.setEnabled(False)
+                self.btn.setText('분석 완료!')
             self.pbar.setValue(int((a + 1) * 100 / len(code_data)))
             print(a + 1, '  /  ', len(code_data))
             gc.collect()
